@@ -1,0 +1,44 @@
+services:
+  postgres:
+    image: postgres:17-alpine
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_DB: fika
+      POSTGRES_USER: fika
+      POSTGRES_PASSWORD: fika
+    volumes:
+      - fika-postgres:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U fika -d fika"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  mailpit:
+    image: axllent/mailpit:latest
+    ports:
+      - "1025:1025"
+      - "8025:8025"
+
+  fika:
+    build: .
+    ports:
+      - "3000:3000"
+    env_file:
+      - path: .env
+        required: false
+    environment:
+      DATABASE_URL: postgres://fika:fika@postgres:5432/fika
+      SMTP_HOST: mailpit
+      SMTP_PORT: 1025
+      MAIL_FROM: Fika <hello@localhost>
+    depends_on:
+      postgres:
+        condition: service_healthy
+      mailpit:
+        condition: service_started
+    restart: unless-stopped
+
+volumes:
+  fika-postgres:

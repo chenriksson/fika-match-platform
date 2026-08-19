@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#f5f1e8" />
+    <title>Fika | Match people with intention</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <main class="app-shell">
+      <aside class="sidebar">
+        <div class="brand-mark"><span id="brand-logo">f</span><strong id="brand-name">Fika</strong></div>
+        <p class="sidebar-kicker" id="brand-tagline">Community matching</p>
+        <nav class="main-nav" aria-label="Main navigation">
+          <button class="nav-item active" data-view="overview"><span class="nav-icon">◌</span>Overview</button>
+          <button class="nav-item" data-view="groups"><span class="nav-icon">⌘</span>Groups</button>
+          <button class="nav-item" data-view="rounds"><span class="nav-icon">↗</span>Match rounds</button>
+        </nav>
+        <div class="sidebar-bottom">
+          <div class="user-chip"><div class="avatar avatar-amber">JD</div><div><strong>Jordan Davis</strong><span>Workspace admin</span></div><span class="chevron">⌄</span></div>
+          <p class="version">Local prototype · v0.1</p>
+        </div>
+      </aside>
+
+      <section class="content-area">
+        <header class="topbar">
+          <div class="breadcrumb"><span>Workspace</span><b>/</b><strong id="page-label">Overview</strong></div>
+          <div class="topbar-actions"><span class="status-dot"><i></i>Local environment</span><button class="icon-button" title="Notifications" aria-label="Notifications">♢</button><button class="theme-button" id="theme-settings" title="Theme settings">Theme</button><button class="avatar avatar-amber" title="Account" aria-label="Account">JD</button></div>
+        </header>
+
+        <div class="page-content" id="app">
+          <section class="hero-row">
+            <div><p class="eyebrow">Wednesday, August 19, 2026</p><h1 id="hero-title">Make room for a good conversation.</h1><p class="hero-copy">A calm way to help people in your community meet, one thoughtful match at a time.</p></div>
+            <div class="hero-note"><span class="note-line"></span><p>“The best conversations<br />are the ones you didn’t<br /><em>schedule too tightly.</em>”</p></div>
+          </section>
+
+          <section class="metrics-grid" aria-label="Workspace metrics">
+            <article class="metric-card accent-coral"><span class="metric-label">Active members</span><strong id="member-count">24</strong><span class="metric-meta"><b>↑ 12%</b> this month</span><div class="mini-bars"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div></article>
+            <article class="metric-card accent-teal"><span class="metric-label">Matches made</span><strong id="match-count">18</strong><span class="metric-meta"><b>6</b> this week</span><div class="mini-ring"><span>75%</span></div></article>
+            <article class="metric-card accent-gold"><span class="metric-label">Next round</span><strong id="next-round">2d 06h</strong><span class="metric-meta">Wednesday · 09:00</span><div class="calendar-mark">19</div></article>
+          </section>
+
+          <section class="workspace-grid">
+            <article class="panel matches-panel">
+              <div class="panel-header"><div><p class="eyebrow">Keep it moving</p><h2>Recent matches</h2></div><button class="text-button" data-view="rounds">View all <span>→</span></button></div>
+              <div id="matches-list" class="matches-list"></div>
+            </article>
+            <article class="panel group-panel">
+              <div class="panel-header"><div><p class="eyebrow">Your spaces</p><h2>Groups</h2></div><button class="round-button" id="add-group" title="Add a group" aria-label="Add a group">+</button></div>
+              <div id="groups-list" class="groups-list"></div>
+            </article>
+          </section>
+
+          <section class="action-banner"><div class="action-symbol">✦</div><div><p class="eyebrow">Admin action</p><h2>Ready to make a few introductions?</h2><p>Generate the next round for your selected group. Fika will avoid previous pairings automatically.</p><label class="opt-out-control"><input type="checkbox" id="opt-out-toggle" /> I’m sitting this round out</label></div><button class="primary-button" id="generate-match">Generate matches <span>↗</span></button></section>
+        </div>
+      </section>
+    </main>
+    <aside class="theme-panel" id="theme-panel" aria-label="Theme settings" aria-hidden="true">
+      <div class="theme-panel-header"><div><p class="eyebrow">System admin</p><h2>Theme settings</h2></div><button class="icon-button" id="close-theme" title="Close theme settings" aria-label="Close theme settings">×</button></div>
+      <form id="theme-form">
+        <label>Logo mark<input name="logoText" maxlength="3" required /></label>
+        <label>Brand name<input name="brandName" maxlength="120" required /></label>
+        <label>Page title<input name="pageTitle" maxlength="120" required /></label>
+        <label>Tagline<input name="tagline" maxlength="120" required /></label>
+        <label>Color mode<select name="colorMode"><option value="light">Light</option><option value="dark">Dark</option></select></label>
+        <div class="theme-color-grid">
+          <label>Primary<input name="primaryColor" type="color" required /></label>
+          <label>Secondary<input name="secondaryColor" type="color" required /></label>
+          <label>Accent<input name="accentColor" type="color" required /></label>
+          <label>Paper<input name="paperColor" type="color" required /></label>
+          <label>Ink<input name="inkColor" type="color" required /></label>
+        </div>
+        <button class="primary-button theme-save" type="submit">Save theme <span>↗</span></button>
+      </form>
+    </aside>
+    <div class="toast" id="toast" role="status"></div>
+    <script src="app.js"></script>
+  </body>
+</html>
