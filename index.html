@@ -21,7 +21,7 @@
           <button class="nav-item" data-view="rounds"><span class="nav-icon">↗</span>Match rounds</button>
         </nav>
         <div class="sidebar-bottom">
-          <div class="user-chip"><div class="avatar avatar-amber">JD</div><div><strong>Jordan Davis</strong><span>Workspace admin</span></div><span class="chevron">⌄</span></div>
+          <div class="user-chip"><div class="avatar avatar-amber">?</div><div><strong id="current-user-name">Not signed in</strong><span id="current-user-role">Sign in to continue</span></div><span class="chevron">⌄</span></div>
           <p class="version">Local prototype · v0.1</p>
         </div>
       </aside>
@@ -29,7 +29,7 @@
       <section class="content-area">
         <header class="topbar">
           <div class="breadcrumb"><span>Workspace</span><b>/</b><strong id="page-label">Overview</strong></div>
-          <div class="topbar-actions"><span class="status-dot"><i></i>Local environment</span><button class="icon-button" title="Notifications" aria-label="Notifications">♢</button><button class="theme-button" id="theme-settings" title="Theme settings">Theme</button><button class="avatar avatar-amber" title="Account" aria-label="Account">JD</button></div>
+          <div class="topbar-actions"><span class="status-dot"><i></i>Local environment</span><button class="icon-button" title="Notifications" aria-label="Notifications">♢</button><button class="theme-button requires-auth" id="theme-settings" title="Theme settings">Theme</button><span class="auth-actions" id="auth-actions"><a href="/auth/google">Sign in with Google</a></span><button class="avatar avatar-amber" title="Account" aria-label="Account">?</button></div>
         </header>
 
         <div class="page-content" id="app">
@@ -55,10 +55,38 @@
             </article>
           </section>
 
-          <section class="action-banner"><div class="action-symbol">✦</div><div><p class="eyebrow">Admin action</p><h2>Ready to make a few introductions?</h2><p>Generate the next round for your selected group. Fika will avoid previous pairings automatically.</p><label class="opt-out-control"><input type="checkbox" id="opt-out-toggle" /> I’m sitting this round out</label></div><button class="primary-button" id="generate-match">Generate matches <span>↗</span></button></section>
+          <section class="action-banner"><div class="action-symbol">✦</div><div><p class="eyebrow" id="match-action-label">Authentication required</p><h2 id="match-action-title">Sign in to manage matches.</h2><p id="match-action-copy">Sign in with Google or Microsoft to access group and match actions.</p><label class="opt-out-control"><input type="checkbox" id="opt-out-toggle" disabled /> I’m sitting this round out</label></div><button class="primary-button requires-auth" id="generate-match">Sign in to continue <span>↗</span></button></section>
         </div>
       </section>
     </main>
+    <aside class="group-panel-drawer" id="group-management" aria-label="Group management" aria-hidden="true">
+      <div class="theme-panel-header"><div><p class="eyebrow">Group administration</p><h2>Manage groups</h2></div><button class="icon-button" id="close-groups" title="Close group management" aria-label="Close group management">×</button></div>
+      <form id="create-group-form" class="management-form">
+        <h3>Create a group</h3>
+        <label>Group name<input name="name" required /></label>
+        <label>Match size<select name="groupSize"><option value="2">2</option><option value="3">3</option><option value="4">4</option></select></label>
+        <button class="primary-button" type="submit">Create group <span>↗</span></button>
+      </form>
+      <form id="group-settings-form" class="management-form">
+        <h3>Group settings</h3>
+        <label>Group<select name="groupId" id="managed-group-select"></select></label>
+        <label>Match size<select name="groupSize"><option value="2">2 people</option><option value="3">3 people</option><option value="4">4 people</option></select></label>
+        <label>Reset threshold (%)<input name="resetThresholdPercent" type="number" min="0" max="100" value="15" required /></label>
+        <button class="primary-button" type="submit">Save settings <span>↗</span></button>
+      </form>
+      <form id="add-member-form" class="management-form">
+        <h3>Add member</h3>
+        <label>Name<input name="name" required /></label>
+        <label>Email<input name="email" type="email" required /></label>
+        <button class="primary-button" type="submit">Add member <span>↗</span></button>
+      </form>
+      <form id="assign-admin-form" class="management-form">
+        <h3>Assign group admin</h3>
+        <label>User email<input name="email" type="email" required /></label>
+        <button class="primary-button" type="submit">Assign admin <span>↗</span></button>
+      </form>
+      <div id="managed-members" class="managed-members"></div>
+    </aside>
     <aside class="theme-panel" id="theme-panel" aria-label="Theme settings" aria-hidden="true">
       <div class="theme-panel-header"><div><p class="eyebrow">System admin</p><h2>Theme settings</h2></div><button class="icon-button" id="close-theme" title="Close theme settings" aria-label="Close theme settings">×</button></div>
       <form id="theme-form">

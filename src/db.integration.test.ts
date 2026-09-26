@@ -2,10 +2,13 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { Pool } from 'pg';
 import {
+  addGroupMember,
   initializeDatabase,
+  loadDashboard,
   loadDemoState,
   saveRound,
   setMemberOptOut,
+  updateGroupConfig,
   updateDemoConfig
 } from './db.js';
 
@@ -35,6 +38,8 @@ test('persists demo state and idempotent rounds in PostgreSQL', async (context) 
 
   const updatedConfig = await updateDemoConfig({ groupSize: 3, resetThresholdPercent: 25 });
   assert.deepEqual(updatedConfig, { groupSize: 3, resetThresholdPercent: 25 });
+  assert.deepEqual(await updateGroupConfig('demo', { groupSize: 4, resetThresholdPercent: 35 }), { groupSize: 4, resetThresholdPercent: 35 });
+  await updateGroupConfig('demo', updatedConfig);
 
   const generationKey = `integration-${Date.now()}`;
   const history = new Set(['jordan:maya']);
@@ -56,6 +61,51 @@ test('persists demo state and idempotent rounds in PostgreSQL', async (context) 
   assert.deepEqual(state.config, updatedConfig);
   assert.equal(state.history.has('jordan:maya'), true);
 
+  const dashboard = await loadDashboard({
+    userId: 'integration-admin',
+    name: 'Integration Admin',
+    email: 'integration@example.com',
+    systemRole: 'system_admin',
+    groupIds: [],
+    memberIds: []
+  });
+  assert.equal(dashboard.groups.some((group) => group.id === 'demo'), true);
+  assert.equal(dashboard.matchesMade >= 1, true);
+
+  await pool.query(
+    `INSERT INTO app_users (id, email, name, system_role)
+     VALUES ('integration-group-admin', 'group-admin@example.com', 'Group Admin', 'user')
+     ON CONFLICT (id) DO NOTHING`
+  );
+  await pool.query(
+    `INSERT INTO group_admins (group_id, user_id) VALUES ('demo', 'integration-group-admin')
+     ON CONFLICT DO NOTHING`
+  );
+  const groupAdminDashboard = await loadDashboard({
+    userId: 'integration-group-admin',
+    name: 'Group Admin',
+    email: 'group-admin@example.com',
+    systemRole: 'user',
+    groupIds: ['demo'],
+    memberIds: []
+  });
+  assert.deepEqual(groupAdminDashboard.groups.map((group) => group.id), ['demo']);
+  const memberDashboard = await loadDashboard({
+    userId: 'integration-member',
+    name: 'Member',
+    email: 'member@example.com',
+    systemRole: 'user',
+    groupIds: [],
+    memberIds: []
+  });
+  assert.deepEqual(memberDashboard.groups, []);
+
+  await addGroupMember('demo', 'integration-duplicate-member', 'duplicate@example.com', 'Duplicate Test');
+  await assert.rejects(
+    addGroupMember('demo', 'integration-duplicate-member-2', 'DUPLICATE@example.com', 'Duplicate Test 2'),
+    (error: unknown) => error && typeof error === 'object' && 'code' in error && error.code === '23505'
+  );
+
   const counts = await pool.query<{ rounds: string; matches: string; participants: string; notifications: string }>(
     `SELECT
        (SELECT COUNT(*) FROM rounds WHERE group_id = $1 AND generation_key = $2) AS rounds,
@@ -68,6 +118,9 @@ test('persists demo state and idempotent rounds in PostgreSQL', async (context) 
 });
 
 test.after(async () => {
+  await pool.query("DELETE FROM members WHERE id = 'integration-duplicate-member'");
+  await pool.query("DELETE FROM group_admins WHERE user_id = 'integration-group-admin'");
+  await pool.query("DELETE FROM app_users WHERE id = 'integration-group-admin'");
   await pool.query('DELETE FROM rounds WHERE group_id = $1', ['demo']);
   await pool.query('DELETE FROM pair_history WHERE group_id = $1', ['demo']);
   await pool.query('UPDATE members SET opted_out = FALSE WHERE group_id = $1', ['demo']);

@@ -1,3 +1,20 @@
+CREATE TABLE IF NOT EXISTS app_users (
+  id TEXT PRIMARY KEY,
+  oidc_subject TEXT UNIQUE,
+  email TEXT NOT NULL UNIQUE,
+  name TEXT NOT NULL,
+  system_role TEXT NOT NULL DEFAULT 'user' CHECK (system_role IN ('system_admin', 'user')),
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS session (
+  sid VARCHAR NOT NULL PRIMARY KEY,
+  sess JSON NOT NULL,
+  expire TIMESTAMP(6) NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS session_expire_idx ON session (expire);
+
 CREATE TABLE IF NOT EXISTS groups (
   id TEXT PRIMARY KEY,
   name TEXT NOT NULL,
@@ -5,13 +22,24 @@ CREATE TABLE IF NOT EXISTS groups (
   reset_threshold_percent NUMERIC NOT NULL CHECK (reset_threshold_percent BETWEEN 0 AND 100)
 );
 
+CREATE TABLE IF NOT EXISTS group_admins (
+  group_id TEXT NOT NULL REFERENCES groups(id) ON DELETE CASCADE,
+  user_id TEXT NOT NULL REFERENCES app_users(id) ON DELETE CASCADE,
+  PRIMARY KEY (group_id, user_id)
+);
+
 CREATE TABLE IF NOT EXISTS members (
   id TEXT PRIMARY KEY,
   group_id TEXT NOT NULL REFERENCES groups(id) ON DELETE CASCADE,
+  user_id TEXT REFERENCES app_users(id) ON DELETE SET NULL,
   email TEXT NOT NULL,
   name TEXT NOT NULL,
   opted_out BOOLEAN NOT NULL DEFAULT FALSE
 );
+
+ALTER TABLE members ADD COLUMN IF NOT EXISTS user_id TEXT REFERENCES app_users(id) ON DELETE SET NULL;
+CREATE INDEX IF NOT EXISTS members_user_id_idx ON members(user_id) WHERE user_id IS NOT NULL;
+CREATE UNIQUE INDEX IF NOT EXISTS members_group_email_idx ON members (group_id, LOWER(email));
 
 CREATE TABLE IF NOT EXISTS rounds (
   id BIGSERIAL PRIMARY KEY,

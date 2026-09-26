@@ -29,10 +29,16 @@ services:
       - path: .env
         required: false
     environment:
+      NODE_ENV: development
+      LOCAL_DEMO_ADMIN: "false"
       DATABASE_URL: postgres://fika:fika@postgres:5432/fika
       SMTP_HOST: mailpit
       SMTP_PORT: 1025
       MAIL_FROM: Fika <hello@localhost>
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-}
+      MICROSOFT_CLIENT_ID: ${MICROSOFT_CLIENT_ID:-}
+      MICROSOFT_CLIENT_SECRET: ${MICROSOFT_CLIENT_SECRET:-}
     depends_on:
       postgres:
         condition: service_healthy

@@ -83,6 +83,8 @@ MAIL_FROM="Fika <hello@localhost>"
 The supported environment variables are documented in [.env.example](.env.example):
 
 - `PORT`: API and static site port. Defaults to `3000`.
+- `NODE_ENV`: runtime mode. Use `production` when hosted.
+- `LOCAL_DEMO_ADMIN`: local-only demo authorization bypass. Keep unset or `false` in production.
 - `DATABASE_URL`: PostgreSQL connection string.
 - `SESSION_SECRET`: session signing secret. Use a long random value outside local development.
 - `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASSWORD`, `MAIL_FROM`: SMTP delivery settings.
@@ -91,6 +93,16 @@ The supported environment variables are documented in [.env.example](.env.exampl
 - `OIDC_SUCCESS_REDIRECT`: redirect target after OIDC login.
 
 Inside Docker Compose, the database and Mailpit hostnames are `postgres` and `mailpit`; do not replace those with `localhost` in the container environment.
+
+## OIDC login
+
+Google login is currently enabled when its credentials are configured. Microsoft login is intentionally hidden and unavailable until its provider configuration is enabled. Register this callback URL with Google using the public app origin:
+
+```text
+https://your-app.example.com/auth/callback/google
+```
+
+Set the Google client ID and secret in the hosting platform's secret store. The login flow validates the OIDC state and nonce, persists the authenticated user in `app_users`, and links the identity to an existing member when the email matches. Role assignments remain database-controlled; an authenticated user is not automatically a system or group admin.
 
 ## Development commands
 
@@ -123,6 +135,30 @@ The HTML coverage report is generated at `coverage/index.html`. The PostgreSQL i
 - Mailpit capture in Docker
 - Google and Microsoft OIDC routes when credentials are configured
 - Persisted system-admin theme settings, including branding, colors, and light/dark mode
+- Authenticated dashboard data for authorized groups, persisted matches, and live metrics
+- Self-service member opt-out through `/api/me/opt-out`
+- Scoped group administration APIs for group creation, settings, members, and group-admin assignment
+
+## Roles and permissions
+
+The application separates global system administration from group administration:
+
+- `system_admin`: manages global theme and branding, and is allowed to investigate system-level operations. A system admin can also administer every group.
+- `user`: has no global administration privileges. Add the user to `group_admins` for the groups they may configure and operate.
+- Group admins can manage only their assigned groups, including group configuration, member opt-outs, and match-round generation. They cannot change the global theme.
+
+For local development, Compose sets `LOCAL_DEMO_ADMIN=false` and `NODE_ENV=development`, so the app starts with no active user and requires OIDC login. Set `LOCAL_DEMO_ADMIN=true` temporarily only when you need a local system-admin shortcut. This bypass is disabled automatically when `NODE_ENV=production`; production requests must authenticate through OIDC and resolve to a database user.
+
+After a production user signs in through OIDC, assign system administration or group administration directly in PostgreSQL. Examples:
+
+```sql
+UPDATE app_users SET system_role = 'system_admin' WHERE email = 'admin@example.org';
+INSERT INTO group_admins (group_id, user_id)
+SELECT 'demo', id FROM app_users WHERE email = 'group-admin@example.org'
+ON CONFLICT DO NOTHING;
+```
+
+The theme endpoints require `system_admin`. Group state, opt-out, configuration, and round-generation endpoints require either `system_admin` or an assignment in `group_admins`.
 
 ## API examples
 
@@ -142,6 +178,10 @@ The same key returns HTTP `409` rather than creating a second round.
 
 Read or update the persisted theme through `/api/theme`. Theme colors must be six-digit hex values, and `colorMode` must be `light` or `dark`.
 
+Authenticated users can read `/api/dashboard` to load their authorized groups, recent persisted matches, active-member count, and match count. The homepage uses this endpoint after login and shows empty states rather than fabricated demo matches when no data is available.
+
+Group administration is available through `/api/groups/:groupId/config`, `/api/groups/:groupId/members`, and `/api/groups/:groupId/matches`. System admins pass the group-admin authorization check for every group; ordinary group admins are limited to groups listed in `group_admins`.
+
 ## Hosting notes
 
 The included Dockerfile builds the TypeScript API in a Node 22 Alpine build stage and runs it in a smaller production stage. A hosted deployment needs:
@@ -153,7 +193,7 @@ The included Dockerfile builds the TypeScript API in a Node 22 Alpine build stag
 5. TLS termination and secure session cookies.
 6. Authentication and authorization before exposing admin or group operations publicly.
 
-The current Compose setup is for local development, not production. It uses seeded demo data, an in-memory Express session store, permissive local defaults, and no production authentication or authorization enforcement.
+The current Compose setup is for local development, not production. It uses seeded demo data and permissive local defaults. Sessions are stored in PostgreSQL so a normal app restart does not invalidate authenticated users.
 
 ## License
 
