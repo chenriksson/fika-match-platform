@@ -1,0 +1,53 @@
+name: CI
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_DB: fika
+          POSTGRES_USER: fika
+          POSTGRES_PASSWORD: fika
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U fika -d fika"
+          --health-interval 10s
+          --health-timeout 5s
+          --retries 10
+
+    env:
+      PORT: 3000
+      DATABASE_URL: postgres://fika:fika@localhost:5432/fika
+      SESSION_SECRET: ci-secret
+      OIDC_SUCCESS_REDIRECT: http://localhost:3000
+      SMTP_HOST: localhost
+      SMTP_PORT: 1025
+      MAIL_FROM: "Fika <hello@localhost>"
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build TypeScript
+        run: npm run build
+
+      - name: Run tests
+        run: npm test
