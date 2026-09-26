@@ -1,0 +1,11 @@
+# Default owners for the repository
+* @chenriksson
+
+# GitHub automation and contributor guidance
+/.github/ @chenriksson
+
+# Core application entry points
+/app.js @chenriksson
+/src/ @chenriksson
+/package.json @chenriksson
+/README.md @chenriksson

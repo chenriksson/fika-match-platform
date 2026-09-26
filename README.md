@@ -2,6 +2,8 @@
 
 A TypeScript and Node.js prototype for a community matching workflow. The local stack serves the web UI and API, persists data in PostgreSQL, and captures email in Mailpit.
 
+[![CI](https://github.com/chenriksson/fika-match-platform/actions/workflows/ci.yml/badge.svg)](https://github.com/chenriksson/fika-match-platform/actions/workflows/ci.yml)
+
 ## Prerequisites
 
 For the recommended setup, install:
