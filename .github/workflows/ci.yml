@@ -24,6 +24,12 @@ jobs:
           --health-timeout 5s
           --retries 10
 
+      mailpit:
+        image: axllent/mailpit:latest
+        ports:
+          - 1025:1025
+          - 8025:8025
+
     env:
       PORT: 3000
       DATABASE_URL: postgres://fika:fika@localhost:5432/fika
@@ -51,3 +57,8 @@ jobs:
 
       - name: Run tests
         run: npm test
+
+# Note: GitHub hosted runners do not support docker compose inside the job.
+# Instead, the required PostgreSQL and Mailpit services are started by the
+# runner itself through the `services` block above, which is the supported
+# pattern for CI validation in GitHub Actions.
